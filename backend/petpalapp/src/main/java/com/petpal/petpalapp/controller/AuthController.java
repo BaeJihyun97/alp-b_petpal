@@ -11,9 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.petpal.petpalapp.domain.PUser;
-import com.petpal.petpalapp.dto.LoginRequestDTO;
 import com.petpal.petpalapp.dto.PUserDTO;
 import com.petpal.petpalapp.dto.ResponseDTO;
+import com.petpal.petpalapp.dto.request.PUserRequestDTO;
+import com.petpal.petpalapp.dto.response.LoginResponseDTO;
 import com.petpal.petpalapp.service.PUserService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,16 +32,16 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password/confirm")
-    public ResponseEntity<PUser> updatePassword(@RequestBody PUser user) {
-        Optional<PUser> updatedUser = pUserService.updatePasswordPUser(user);
-        return updatedUser.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<Void>> updatePassword(@RequestBody PUserRequestDTO user) {
+        ResponseDTO<Void> updatedUser = pUserService.updatePassword(user);
+        return ResponseEntity.status(updatedUser.getStatus()).body(updatedUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginRequestDTO> login(@RequestBody LoginRequestDTO request, HttpSession session) {
-        ResponseDTO<LoginRequestDTO> response = pUserService.login(request, session);
-        return ResponseEntity.status(response.getStatus()).body(response.getData());
+    public ResponseEntity<ResponseDTO<LoginResponseDTO>> login(@RequestBody PUserRequestDTO request,
+            HttpSession session) {
+        ResponseDTO<LoginResponseDTO> response = pUserService.login(request, session);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PostMapping("/logout")
