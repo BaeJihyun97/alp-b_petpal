@@ -9,8 +9,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.petpal.petpalapp.domain.PUser;
+import com.petpal.petpalapp.dto.ResponseDTO;
+import com.petpal.petpalapp.dto.request.PUserRegistDTO;
+import com.petpal.petpalapp.dto.request.PUserUpdateDTO;
 import com.petpal.petpalapp.service.PUserService;
-import com.petpal.petpalapp.testTmp.domain.TestUser;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
@@ -35,39 +36,38 @@ public class PUserController {
 
     // C
     @PostMapping
-    public ResponseEntity<PUser> createPUser(@RequestBody PUser user) {
-        PUser createdUser = pUserService.createPUser(user);
-        return ResponseEntity.ok(createdUser);
+    public ResponseEntity<ResponseDTO<PUser>> createPUser(@RequestBody PUserRegistDTO user) {
+        ResponseDTO<PUser> response = pUserService.createPUser(user);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     // R list
     @GetMapping
-    public ResponseEntity<List<PUser>> getAllPUsers() {
-        List<PUser> users = pUserService.getAllPUsers();
-        return ResponseEntity.ok(users);
+    public ResponseEntity<ResponseDTO<List<PUser>>> getAllPUsers() {
+        ResponseDTO<List<PUser>> response = pUserService.getAllPUsers();
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     // R
     @GetMapping("/{id}")
-    public ResponseEntity<PUser> getPUserById(@PathVariable("id") Long id) {
-        Optional<PUser> user = pUserService.getPUserById(id);
-        return user.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<PUser>> getPUserById(@PathVariable("id") Long id) {
+        ResponseDTO<PUser> response = pUserService.getPUserById(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     // U
     @PutMapping("/{id}")
-    public ResponseEntity<PUser> updatePUser(@PathVariable("id") Long id, @RequestBody PUser user) {
-        Optional<PUser> updatedUser = pUserService.updatePUser(id, user);
-        return updatedUser.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<PUser>> updatePUser(@PathVariable("id") Long id,
+            @RequestBody PUserUpdateDTO user) {
+        ResponseDTO<PUser> response = pUserService.updatePUser(id, user);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     // D
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePUser(@PathVariable("id") Long id) {
-        pUserService.deletePUser(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ResponseDTO<Void>> deletePUser(@PathVariable("id") Long id) {
+        ResponseDTO<Void> response = pUserService.deletePUser(id);
+        return ResponseEntity.status(response.getStatus()).body(response);
     }
 
 }

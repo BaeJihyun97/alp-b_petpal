@@ -9,12 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.util.StringUtils;
 
 import com.petpal.petpalapp.common.enums.PState;
 import com.petpal.petpalapp.domain.PUser;
-import com.petpal.petpalapp.dto.PUserDTO;
 import com.petpal.petpalapp.dto.ResponseDTO;
+import com.petpal.petpalapp.dto.request.PUserRegistDTO;
 import com.petpal.petpalapp.dto.request.PUserRequestDTO;
+import com.petpal.petpalapp.dto.request.PUserUpdateDTO;
 import com.petpal.petpalapp.dto.response.LoginResponseDTO;
 import com.petpal.petpalapp.mapper.PUserMapper;
 import com.petpal.petpalapp.repository.PUserRepository;
@@ -36,70 +38,68 @@ public class PUserService {
     }
 
     @Transactional
-    public PUser createPUser(PUser user) {
-        if (pUserRepository.existsByEmail(user.getEmail())) {
+    public ResponseDTO<PUser> createPUser(PUserRegistDTO userDto) {
+        if (!StringUtils.hasText(userDto.getEmail()) || pUserRepository.existsByEmail(userDto.getEmail())) {
             throw new IllegalArgumentException("Exist Email Address");
         }
 
-        if (user.getPassword() == null || user.getPassword().isEmpty()) {
-            throw new IllegalArgumentException("Empty Password");
+        if (!StringUtils.hasText(userDto.getPassword()) || !StringUtils.hasText(userDto.getName()) ||
+                !StringUtils.hasText(userDto.getPhoneNumber())) {
+            throw new IllegalArgumentException("입력값이 유효하지 않습니다.");
         }
 
-        if (user.getName() == null || user.getName().isEmpty()) {
-            throw new IllegalArgumentException("Empty Name");
-        }
+        PUser user = this.pUserMapper.PUserRegistDTO2PUser(userDto);
 
-        if (user.getPhoneNumber() == null || user.getPhoneNumber().isEmpty()) {
-            throw new IllegalArgumentException("Empty Phone Number");
-        }
-
-        // if null value set current time
         user.setUpdatedAt(LocalDateTime.now());
-        if (user.getCreatedAt() == null)
-            user.setCreatedAt(LocalDateTime.now());
-        if (user.getState() == null)
-            user.setState(PState.ENABLED);
-        if (user.getRegisterDate() == null)
-            user.setRegisterDate(LocalDateTime.now());
+        user.setCreatedAt(LocalDateTime.now());
+        user.setState(PState.ENABLED);
+        user.setRegisterDate(LocalDateTime.now());
 
-        return pUserRepository.save(user);
+        PUser savedUser = Optional.ofNullable(pUserRepository.save(user))
+                .orElseThrow(() -> new RuntimeException("내부 오류. 관리자에게 연략하세요."));
+
+        return new ResponseDTO<>(200, "회원가입 성공", savedUser);
     }
 
     @Transactional
-    public Optional<PUser> updatePUser(Long id, PUser user) {
+    public ResponseDTO<PUser> updatePUser(Long id, PUserUpdateDTO user) {
 
-        if (!pUserRepository.existsById(id)) {
-            throw new IllegalArgumentException("User with id " + id + "not found");
-        }
+        PUser existingUser = pUserRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "계정이 없습니다."));
 
-        PUser existingUser = pUserRepository.findById(id).get();
-
-        if (user.getName() != null || !user.getName().isEmpty()) {
+        if (StringUtils.hasText(user.getName())) {
             existingUser.setName(user.getName());
         }
 
-        if (user.getPhoneNumber() != null || !user.getPhoneNumber().isEmpty()) {
+        if (StringUtils.hasText(user.getPhoneNumber())) {
             existingUser.setPhoneNumber(user.getPhoneNumber());
         }
 
-        // if null value set current time
         existingUser.setUpdatedAt(LocalDateTime.now());
 
-        return Optional.ofNullable(pUserRepository.save(existingUser));
+        PUser savedUser = Optional.ofNullable(pUserRepository.save(existingUser))
+                .orElseThrow(() -> new RuntimeException("내부 오류. 관리자에게 연략하세요."));
+
+        return new ResponseDTO<>(200, "정보 수정 성공", savedUser);
 
     }
 
-    public List<PUser> getAllPUsers() {
-        return pUserRepository.findAll();
+    public ResponseDTO<List<PUser>> getAllPUsers() {
+        return new ResponseDTO<>(200, "회원 목록 조회회 성공", pUserRepository.findAll());
     }
 
-    public Optional<PUser> getPUserById(Long id) {
-        return pUserRepository.findById(id);
+    public ResponseDTO<PUser> getPUserById(Long id) {
+        PUser foundUser = pUserRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "계정이 없습니다."));
+
+        return new ResponseDTO<>(200, "회원 조회 성공", foundUser);
     }
 
     @Transactional
-    public void deletePUser(Long id) {
+    public ResponseDTO<Void> deletePUser(Long id) {
         pUserRepository.deleteById(id);
+
+        return new ResponseDTO<>(200, "회원 삭제 성공", null);
     }
 
     @Transactional
@@ -142,7 +142,7 @@ public class PUserService {
         if (user == null) {
             return new ResponseDTO<>(401, "로그인 정보 없음", null);
         }
-        return new ResponseDTO<>(200, "로그인됨", null);
+        return new ResponseDTO<>(200, "로그인 됨", null);
     }
 
 }

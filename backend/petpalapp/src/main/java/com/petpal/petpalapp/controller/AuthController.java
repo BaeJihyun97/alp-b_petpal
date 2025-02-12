@@ -1,7 +1,5 @@
 package com.petpal.petpalapp.controller;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,8 +8,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.petpal.petpalapp.domain.PUser;
-import com.petpal.petpalapp.dto.PUserDTO;
 import com.petpal.petpalapp.dto.ResponseDTO;
 import com.petpal.petpalapp.dto.request.PUserRequestDTO;
 import com.petpal.petpalapp.dto.response.LoginResponseDTO;
