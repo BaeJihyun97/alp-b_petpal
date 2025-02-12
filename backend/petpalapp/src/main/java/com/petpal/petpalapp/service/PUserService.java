@@ -5,11 +5,20 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.petpal.petpalapp.common.enums.PState;
 import com.petpal.petpalapp.domain.PUser;
+import com.petpal.petpalapp.dto.LoginRequestDTO;
+import com.petpal.petpalapp.dto.PUserDTO;
+import com.petpal.petpalapp.dto.ResponseDTO;
 import com.petpal.petpalapp.repository.PUserRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Service
 public class PUserService {
@@ -75,7 +84,7 @@ public class PUserService {
     public Optional<PUser> updatePasswordPUser(PUser user) {
 
         if (!pUserRepository.existsById(user.getUserId())) {
-            throw new IllegalArgumentException("User with id " + user.getUserId() + "not found");
+            throw new IllegalArgumentException("User with id {" + user.getUserId() + "} not found");
         }
 
         PUser existingUser = pUserRepository.findById(user.getUserId()).get();
@@ -101,6 +110,28 @@ public class PUserService {
 
     public void deletePUser(Long id) {
         pUserRepository.deleteById(id);
+    }
+
+    public ResponseDTO<LoginRequestDTO> login(LoginRequestDTO loginDto, HttpSession session) {
+        PUser user = pUserRepository.findByEmail(loginDto.getEmail()).get();
+        if (user == null || !user.getPassword().equals(loginDto.getPassword())) {
+            return new ResponseDTO<>(401, "잘못된 이메일/비밀번호", loginDto);
+        }
+        session.setAttribute("user", user);
+        return new ResponseDTO<>(200, "로그인 성공", loginDto);
+    }
+
+    public ResponseDTO<Void> logout(HttpSession session) {
+        session.invalidate();
+        return new ResponseDTO<>(200, "로그아웃 성공", null);
+    }
+
+    public ResponseDTO<Void> checkSession(HttpSession session) {
+        PUser user = (PUser) session.getAttribute("user");
+        if (user == null) {
+            return new ResponseDTO<>(401, "로그인 정보 없음", null);
+        }
+        return new ResponseDTO<>(200, "로그인됨", null);
     }
 
 }

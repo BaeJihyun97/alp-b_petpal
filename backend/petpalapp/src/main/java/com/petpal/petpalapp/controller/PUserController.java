@@ -61,7 +61,6 @@ public class PUserController {
         Optional<PUser> updatedUser = pUserService.updatePUser(id, user);
         return updatedUser.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
-
     }
 
     // D
