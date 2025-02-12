@@ -55,6 +55,13 @@ public class PUserController {
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
+    // R email
+    @GetMapping("/email/{email}")
+    public ResponseEntity<ResponseDTO<Boolean>> checkEmail(@PathVariable("email") String email) {
+        ResponseDTO<Boolean> response = pUserService.isEmailExist(email);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     // U
     @PutMapping("/{id}")
     public ResponseEntity<ResponseDTO<PUser>> updatePUser(@PathVariable("id") Long id,

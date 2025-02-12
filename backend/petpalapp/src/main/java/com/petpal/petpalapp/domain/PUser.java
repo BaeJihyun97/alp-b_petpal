@@ -2,6 +2,7 @@ package com.petpal.petpalapp.domain;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.petpal.petpalapp.common.enums.PState;
 
 import jakarta.persistence.Column;
@@ -29,6 +30,7 @@ public class PUser {
 
     @NotNull
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
     @Email

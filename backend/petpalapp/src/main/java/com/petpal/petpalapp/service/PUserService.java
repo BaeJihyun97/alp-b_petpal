@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,11 +31,13 @@ import lombok.extern.slf4j.Slf4j;
 public class PUserService {
     private final PUserRepository pUserRepository;
     private PUserMapper pUserMapper;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public PUserService(PUserRepository pUserRepository, PUserMapper pUserMapper) {
+    public PUserService(PUserRepository pUserRepository, PUserMapper pUserMapper, PasswordEncoder passwordEncoder) {
         this.pUserRepository = pUserRepository;
         this.pUserMapper = pUserMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -49,6 +52,7 @@ public class PUserService {
         }
 
         PUser user = this.pUserMapper.PUserRegistDTO2PUser(userDto);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         user.setUpdatedAt(LocalDateTime.now());
         user.setCreatedAt(LocalDateTime.now());
@@ -59,6 +63,11 @@ public class PUserService {
                 .orElseThrow(() -> new RuntimeException("내부 오류. 관리자에게 연략하세요."));
 
         return new ResponseDTO<>(200, "회원가입 성공", savedUser);
+    }
+
+    public ResponseDTO<Boolean> isEmailExist(String email) {
+        System.out.println(email);
+        return new ResponseDTO<>(200, "이메일 조회 성공", pUserRepository.existsByEmail(email));
     }
 
     @Transactional
@@ -85,7 +94,7 @@ public class PUserService {
     }
 
     public ResponseDTO<List<PUser>> getAllPUsers() {
-        return new ResponseDTO<>(200, "회원 목록 조회회 성공", pUserRepository.findAll());
+        return new ResponseDTO<>(200, "회원 목록 조회 성공", pUserRepository.findAll());
     }
 
     public ResponseDTO<PUser> getPUserById(Long id) {
@@ -109,7 +118,7 @@ public class PUserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "계정이 없습니다."));
 
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            existingUser.setPassword(user.getPassword());
+            existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
             existingUser.setUpdatedAt(LocalDateTime.now());
 
             Optional.ofNullable(pUserRepository.save(existingUser))
@@ -124,7 +133,7 @@ public class PUserService {
     public ResponseDTO<LoginResponseDTO> login(PUserRequestDTO loginDto, HttpSession session) {
         PUser user = pUserRepository.findByEmail(loginDto.getEmail()).get();
 
-        if (user == null || !user.getPassword().equals(loginDto.getPassword())) {
+        if (user == null || !passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
             return new ResponseDTO<>(401, "잘못된 이메일/비밀번호", this.pUserMapper.PUser2LoginResponseDTO(user));
         }
 
