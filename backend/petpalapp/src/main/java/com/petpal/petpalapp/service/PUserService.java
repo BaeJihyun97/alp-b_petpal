@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import com.petpal.petpalapp.common.enums.PState;
 import com.petpal.petpalapp.domain.PUser;
+import com.petpal.petpalapp.domain.UserGroupCode;
 import com.petpal.petpalapp.dto.ResponseDTO;
 import com.petpal.petpalapp.dto.request.PUserRegistDTO;
 import com.petpal.petpalapp.dto.request.PUserRequestDTO;
@@ -21,6 +22,7 @@ import com.petpal.petpalapp.dto.request.PUserUpdateDTO;
 import com.petpal.petpalapp.dto.response.LoginResponseDTO;
 import com.petpal.petpalapp.mapper.PUserMapper;
 import com.petpal.petpalapp.repository.PUserRepository;
+import com.petpal.petpalapp.repository.UserGroupCodeRepository;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
@@ -34,12 +36,15 @@ public class PUserService {
     private final PUserRepository pUserRepository;
     private PUserMapper pUserMapper;
     private PasswordEncoder passwordEncoder;
+    private final UserGroupCodeRepository userGroupCodeRepository;
 
     @Autowired
-    public PUserService(PUserRepository pUserRepository, PUserMapper pUserMapper, PasswordEncoder passwordEncoder) {
+    public PUserService(PUserRepository pUserRepository, PUserMapper pUserMapper, PasswordEncoder passwordEncoder,
+            UserGroupCodeRepository userGroupCodeRepository) {
         this.pUserRepository = pUserRepository;
         this.pUserMapper = pUserMapper;
         this.passwordEncoder = passwordEncoder;
+        this.userGroupCodeRepository = userGroupCodeRepository;
     }
 
     @Transactional
@@ -55,6 +60,11 @@ public class PUserService {
 
         PUser user = this.pUserMapper.PUserRegistDTO2PUser(userDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // 기본 그룹 설정
+        UserGroupCode defaultGroup = userGroupCodeRepository.findById("100")
+                .orElseThrow(() -> new RuntimeException("Default group not found"));
+        user.setUserGroupCode(defaultGroup);
 
         user.setUpdatedAt(LocalDateTime.now());
         user.setCreatedAt(LocalDateTime.now());

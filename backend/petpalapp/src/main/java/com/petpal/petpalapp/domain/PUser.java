@@ -17,6 +17,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name = "puser")
@@ -60,5 +62,9 @@ public class PUser {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PState state;
+
+    @ManyToOne
+    @JoinColumn(name = "user_group_code", nullable = false)
+    private UserGroupCode userGroupCode;
 
 }
