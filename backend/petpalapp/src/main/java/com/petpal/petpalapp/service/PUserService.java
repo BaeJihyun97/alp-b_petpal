@@ -25,6 +25,8 @@ import com.petpal.petpalapp.repository.PUserRepository;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 
+// TODO: service에서 response 객체 만드는 거 control로 빼기.
+
 @Slf4j
 @Service
 @Transactional(readOnly = true)
@@ -111,6 +113,7 @@ public class PUserService {
         return new ResponseDTO<>(200, "회원 삭제 성공", null);
     }
 
+    // Auth
     @Transactional
     public ResponseDTO<Void> updatePassword(PUserRequestDTO user) {
 
@@ -130,28 +133,24 @@ public class PUserService {
         return new ResponseDTO<>(401, "비밀번호 형식이 옳바르지 않습니다.", null);
     }
 
-    public ResponseDTO<LoginResponseDTO> login(PUserRequestDTO loginDto, HttpSession session) {
-        PUser user = pUserRepository.findByEmail(loginDto.getEmail()).get();
+    public LoginResponseDTO login(PUserRequestDTO loginDto, HttpSession session) {
+        PUser user = pUserRepository.findByEmail(loginDto.getEmail()).orElse(null);
 
-        if (user == null || !passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
-            return new ResponseDTO<>(401, "잘못된 이메일/비밀번호", this.pUserMapper.PUser2LoginResponseDTO(user));
+        if (user != null && passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
+            session.setAttribute("user", user);
+            return this.pUserMapper.PUser2LoginResponseDTO(user);
+            // throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "잘못된 이메일/비밀번호");
         }
 
-        session.setAttribute("user", user);
-        return new ResponseDTO<>(200, "로그인 성공", this.pUserMapper.PUser2LoginResponseDTO(user));
+        return null;
     }
 
-    public ResponseDTO<Void> logout(HttpSession session) {
+    public void logout(HttpSession session) {
         session.invalidate();
-        return new ResponseDTO<>(200, "로그아웃 성공", null);
     }
 
-    public ResponseDTO<Void> checkSession(HttpSession session) {
-        PUser user = (PUser) session.getAttribute("user");
-        if (user == null) {
-            return new ResponseDTO<>(401, "로그인 정보 없음", null);
-        }
-        return new ResponseDTO<>(200, "로그인 됨", null);
+    public PUser checkSession(HttpSession session) {
+        return (PUser) session.getAttribute("user");
     }
 
 }

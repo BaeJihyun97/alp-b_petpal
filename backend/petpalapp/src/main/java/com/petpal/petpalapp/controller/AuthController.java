@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.petpal.petpalapp.common.ResponseBuilder;
+import com.petpal.petpalapp.domain.PUser;
 import com.petpal.petpalapp.dto.ResponseDTO;
 import com.petpal.petpalapp.dto.request.PUserRequestDTO;
 import com.petpal.petpalapp.dto.response.LoginResponseDTO;
@@ -36,19 +38,35 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ResponseDTO<LoginResponseDTO>> login(@RequestBody PUserRequestDTO request,
             HttpSession session) {
-        ResponseDTO<LoginResponseDTO> response = pUserService.login(request, session);
+        LoginResponseDTO user = pUserService.login(request, session);
+        ResponseDTO<LoginResponseDTO> response;
+
+        if (user == null) {
+            response = ResponseBuilder.makeMessage(401, "이메일/비밀번호 오류", user);
+        } else {
+            response = ResponseBuilder.makeMessage(200, "로그인 됨", user);
+        }
+
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<ResponseDTO<Void>> logout(HttpSession session) {
-        ResponseDTO<Void> response = pUserService.logout(session);
+        pUserService.logout(session);
+        ResponseDTO<Void> response = ResponseBuilder.makeMessage(200, "로그아웃 성공", null);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
     @GetMapping("/session")
     public ResponseEntity<ResponseDTO<Void>> checkSession(HttpSession session) {
-        ResponseDTO<Void> response = pUserService.checkSession(session);
+        PUser user = pUserService.checkSession(session);
+        ResponseDTO<Void> response;
+        if (user == null) {
+            response = ResponseBuilder.makeMessage(401, "로그인 정보 없음", null);
+        } else {
+            response = ResponseBuilder.makeMessage(200, "로그인 됨", null);
+        }
+
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 
