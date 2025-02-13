@@ -58,7 +58,7 @@ public class PUserController {
     // R email
     @GetMapping("/email/{email}")
     public ResponseEntity<ResponseDTO<Boolean>> checkEmail(@PathVariable("email") String email) {
-        ResponseDTO<Boolean> response = pUserService.isEmailExist(email);
+        ResponseDTO<Boolean> response = pUserService.isEmailAvailable(email);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

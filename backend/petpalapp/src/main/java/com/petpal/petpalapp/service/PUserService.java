@@ -67,9 +67,9 @@ public class PUserService {
         return new ResponseDTO<>(200, "회원가입 성공", savedUser);
     }
 
-    public ResponseDTO<Boolean> isEmailExist(String email) {
+    public ResponseDTO<Boolean> isEmailAvailable(String email) {
         System.out.println(email);
-        return new ResponseDTO<>(200, "이메일 조회 성공", pUserRepository.existsByEmail(email));
+        return new ResponseDTO<>(200, "이메일 조회 성공", !pUserRepository.existsByEmail(email));
     }
 
     @Transactional
@@ -133,10 +133,14 @@ public class PUserService {
         return new ResponseDTO<>(401, "비밀번호 형식이 옳바르지 않습니다.", null);
     }
 
+    @Transactional
     public LoginResponseDTO login(PUserRequestDTO loginDto, HttpSession session) {
         PUser user = pUserRepository.findByEmail(loginDto.getEmail()).orElse(null);
 
         if (user != null && passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
+            user.setLastLogin(LocalDateTime.now());
+            pUserRepository.save(user);
+
             session.setAttribute("user", user);
             return this.pUserMapper.PUser2LoginResponseDTO(user);
             // throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "잘못된 이메일/비밀번호");
