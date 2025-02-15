@@ -41,6 +41,7 @@
     </div>
     <footer class="footer">
       <button @click="goToDelete" class="footer-button">탈퇴하기</button>
+      <button @click="goToRegisterPetSitter" class="footer-button">펫시터로 등록하기</button>
     </footer>
   </div>
 </template>
@@ -102,6 +103,9 @@ export default {
     },
     goToDelete() {
       this.$router.push('/delete');
+    },
+    goToRegisterPetSitter() {
+      this.$router.push('/register-petsitter');
     },
     async logout() {
       try {

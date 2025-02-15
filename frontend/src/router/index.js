@@ -6,6 +6,10 @@ import MyPage from '@/pages/MyPage.vue';
 import UpdatePage from '@/pages/UpdatePage.vue';
 import DeletePage from '@/pages/DeletePage.vue';
 import UpdatePasswordPage from '@/pages/UpdatePasswordPage.vue';
+import RegisterPetSitterPage from '@/pages/RegisterPetSitterPage.vue';
+import PetsitterMyPage from '@/pages/PetsitterMyPage.vue';
+import DeletPetsiiterPage from '@/pages/DeletPetsiiterPage.vue';
+import PetsitterSearchPage from '@/pages/PetsitterSearchPage.vue';
 
 const routes = [
   { path: '/', component: MainPage },
@@ -30,7 +34,27 @@ const routes = [
     path: '/update-password',
     name: 'UpdatePasswordPage',
     component: UpdatePasswordPage
-  }  
+  },
+  {
+    path: '/register-petsitter',
+    name: 'RegisterPetSitter',
+    component: RegisterPetSitterPage
+  },
+  {
+    path: '/petsitter-my-page',
+    name: 'PetsitterMyPage',
+    component: PetsitterMyPage
+  },
+  {
+    path: '/delete-petsitter',
+    name: 'DeletePetsitter',
+    component: DeletPetsiiterPage
+  },
+  {
+    path: '/petsitter-search',
+    name: 'PetsitterSearch',
+    component: PetsitterSearchPage
+  }
 ]
 
 const router = createRouter({

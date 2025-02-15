@@ -1,10 +1,16 @@
 <template>
   <router-view />
+  <!-- <PaymentTest /> -->
 </template>
 
 <script>
+// import PaymentTest from '@/components/PaymentTest.vue';
+
 export default {
-  name: 'App'
+  name: 'App',
+  // components: {
+  //   PaymentTest
+  // }
 };
 </script>
 
