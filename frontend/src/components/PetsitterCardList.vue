@@ -1,24 +1,21 @@
 <template>
   <div class="petsitter-card-list">
-    <template v-for="(petSitter, index) in petSitters" :key="index">
+    <template v-for="service in services" :key="service.serviceId">
       <PetsitterCard 
-        :imageSrc="petSitter.imageSrc" 
-        :name="petSitter.name" 
-        :rating="petSitter.rating" 
-        :reviews="petSitter.reviews" 
-        :location="petSitter.location" 
-        :fee="petSitter.fee" 
-        :description="petSitter.description" 
-        :isOpen="petSitter.isOpen" 
-        :hours="petSitter.hours" 
+        :petSitterId="service.petSitterId"
+        :serviceId="service.serviceId"
+        :location="service.locationCodeName"
+        :petType="service.petTypeCodeName"
+        :petSize="service.petSizeCodeName"
+        :fee="service.serviceFee"
       />
     </template>
-    <button @click="loadMore" class="more-button">More</button>
   </div>
 </template>
 
 <script>
 import PetsitterCard from '@/components/PetsitterCard.vue';
+import axios from 'axios';
 
 export default {
   components: {
@@ -26,58 +23,32 @@ export default {
   },
   data() {
     return {
-      petSitters: [],
-      totalLoaded: 0,
-      loadCount: 5
-    };
-  },
-  created() {
-    this.loadPetSitters();
+      services: []
+    }
   },
   methods: {
-    loadPetSitters() {
-      for (let i = 0; i < this.loadCount; i++) {
-        this.petSitters.push(this.generateRandomPetSitter());
+    async fetchServices() {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/pet-sitter-services');
+        if (response.data && response.data.data) {
+          this.services = response.data.data;
+        }
+      } catch (error) {
+        console.error('서비스 목록 로딩 실패:', error);
       }
-      this.totalLoaded += this.loadCount;
-    },
-    loadMore() {
-      this.loadPetSitters();
-    },
-    generateRandomPetSitter() {
-      return {
-        imageSrc: require('@/assets/images/cats-dogs-image_1.jpg'), // 고정된 이미지 URL
-        name: `Pet Sitter ${Math.floor(Math.random() * 100) + 1}`,
-        rating: (Math.random() * 5).toFixed(1),
-        reviews: Math.floor(Math.random() * 1000),
-        location: '시흥동',
-        fee: Math.floor(Math.random() * 200) + 50,
-        description: '펫시터 설명...',
-        isOpen: Math.random() > 0.5,
-        hours: 'Monday - Friday at 8.00 am - 5.00 pm'
-      };
     }
+  },
+  async created() {
+    await this.fetchServices();
   }
 };
 </script>
 
 <style scoped>
 .petsitter-card-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 80%;
-  min-width: 800px;
-  margin: 50px auto;
-}
-
-.more-button {
-  margin-top: 20px;
-  background-color: #6a1b9a; /* 보라색 버튼 */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 20px;
-  cursor: pointer;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
 }
 </style> 

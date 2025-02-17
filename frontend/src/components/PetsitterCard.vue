@@ -1,51 +1,40 @@
 <template>
   <div class="petsitter-card">
-    <div class="card-content">
-      <img :src="imageSrc" alt="Pet Sitter" class="petsitter-image" />
-      <div class="petsitter-info">
-        <h3>{{ name }}</h3>
-        <div class="rating">
-          <span>⭐ {{ rating }} ({{ reviews }} reviews)</span>
+    <div class="card-header">
+      <img 
+        src="@/assets/icons/PetPal_icon_1.png" 
+        alt="PetPal Icon" 
+        class="petsitter-icon"
+      />
+      <div class="service-info">
+        <div class="petsitter-info">
+          <span class="nickname">{{ petsitterInfo.nickname }}</span>
+          <span class="phone">{{ petsitterInfo.phoneNumber }}</span>
         </div>
-        <div class="location">
-          <span>📍 {{ location }}</span>
-        </div>
-        <div class="fee">
-          <span>💲 {{ fee }}</span>
-        </div>
-        <div class="bottom-info">
-          <div class="availability">
-            <span v-if="isOpen" class="open">OPEN</span>
-            <span v-else class="closed">CLOSED</span>
-          </div>
-          <div class="hours">
-            <span>{{ hours }}</span>
-          </div>
+        <div class="location">{{ location }}</div>
+        <div class="pet-info">
+          <span class="pet-type">{{ petType }}</span>
+          <span class="pet-size">({{ petSize }})</span>
         </div>
       </div>
     </div>
-    <div class="description">
-      <p>{{ description }}</p>
+    <div class="card-body">
+      <div class="introduction">{{ petsitterInfo.introduction }}</div>
+      <div class="fee">시간당 {{ formatFee(fee) }}원</div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   props: {
-    imageSrc: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      required: true
-    },
-    rating: {
+    petSitterId: {
       type: Number,
       required: true
     },
-    reviews: {
+    serviceId: {
       type: Number,
       required: true
     },
@@ -53,79 +42,138 @@ export default {
       type: String,
       required: true
     },
+    petType: {
+      type: String,
+      required: true
+    },
+    petSize: {
+      type: String,
+      required: true
+    },
     fee: {
-      type: Number,
-      required: true
-    },
-    description: {
-      type: String,
-      required: true
-    },
-    isOpen: {
-      type: Boolean,
-      required: true
-    },
-    hours: {
-      type: String,
+      type: [Number, String],
       required: true
     }
+  },
+  data() {
+    return {
+      petsitterInfo: {
+        nickname: '',
+        phoneNumber: '',
+        introduction: ''
+      }
+    }
+  },
+  methods: {
+    formatFee(fee) {
+      return Number(fee).toLocaleString();
+    },
+    async fetchPetsitterInfo() {
+      try {
+        const response = await axios.get(`http://localhost:8080/api/v1/pet-sitters/${this.petSitterId}`);
+        if (response.data && response.data.data) {
+          this.petsitterInfo = response.data.data;
+        }
+      } catch (error) {
+        console.error('펫시터 정보 로딩 실패:', error);
+      }
+    }
+  },
+  async created() {
+    await this.fetchPetsitterInfo();
   }
-}
+};
 </script>
 
 <style scoped>
 .petsitter-card {
-  border: 1px solid #e0e0e0;
+  background: white;
   border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 16px;
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+
+.petsitter-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
   display: flex;
-  flex-direction: row;
-  background-color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  width: 100%;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
-.card-content {
-  display: flex;
-  flex: 1;
-  width: 40%;
+.petsitter-icon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
 
-.petsitter-image {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
-  margin-right: 16px;
+.service-info {
+  flex: 1;
 }
 
 .petsitter-info {
-  flex: 1;
+  margin-bottom: 8px;
 }
 
-.rating, .location, .fee {
-  margin: 4px 0;
+.nickname {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #6a1b9a;
+  margin-right: 12px;
 }
 
-.bottom-info {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
+.phone {
+  color: #666;
+  font-size: 0.9em;
 }
 
-.open {
-  color: #4caf50;
+.location {
+  font-size: 1.1em;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
 }
 
-.closed {
-  color: #f44336;
+.pet-info {
+  color: #666;
 }
 
-.description {
-  margin-top: 12px;
-  width: 60%;
-  flex-direction: column;
-  color: #6a6a6a;
-  font-size: 14px;
+.pet-type {
+  margin-right: 8px;
+}
+
+.pet-size {
+  color: #888;
+}
+
+.card-body {
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.introduction {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  max-height: 2.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.fee {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #6a1b9a;
+  text-align: right;
 }
 </style> 
