@@ -11,7 +11,8 @@ import jakarta.persistence.Column;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.ArrayList;
-
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "petsitter_availability")
@@ -22,6 +23,7 @@ public class PetsitterAvailability {
 
     @Id
     @Column(name = "petsitter_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Long petsitterId;
 
     @Column(name = "monday", nullable = false)

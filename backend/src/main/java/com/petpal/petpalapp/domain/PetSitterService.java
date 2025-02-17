@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 // import com.petpal.petpalapp.domain.code.PetTypeCode;
 @Entity 
 @Table(name = "pet_sitter_service")
@@ -23,6 +25,7 @@ public class PetSitterService {
 
     @ManyToOne
     @JoinColumn(name = "pet_sitter_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private PetSitter petSitter;
 
     // @Column(name = "service_name")

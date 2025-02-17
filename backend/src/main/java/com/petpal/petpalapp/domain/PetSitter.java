@@ -17,6 +17,11 @@ import lombok.Getter;
 import lombok.Setter;
 // import com.petpal.petpalapp.domain.code.LocationCode;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
+import java.util.List;
 
 @Entity
 @Getter
@@ -29,8 +34,9 @@ public class PetSitter {
     private Long petSitterId; // PK
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private PUser user; // User 테이블의 PK 참조
+    @JoinColumn(name = "user_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private PUser user;
 
     // @ManyToOne
     // @JoinColumn(name = "location_code", nullable = true)
