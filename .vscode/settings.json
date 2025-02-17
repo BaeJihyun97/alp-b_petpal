@@ -1,4 +1,18 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic",
-    "java.configuration.updateBuildConfiguration": "automatic"
-}
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Attach to Docker (Vue.js)",
+        "type": "node",
+        "request": "attach",
+        "address": "localhost",
+        "port": 9229,
+        "localRoot": "${workspaceFolder}",
+        "remoteRoot": "/app",
+        "protocol": "inspector",
+        "restart": true,
+        "sourceMaps": true,
+        "outFiles": ["${workspaceFolder}/**/*.js"]
+      }
+    ]
+  }

@@ -15,10 +15,6 @@
       </div>
       <div class="form-group-inline">
         <div class="form-group">
-          <label>Email *</label>
-          <input type="email" v-model="email" required />
-        </div>
-        <div class="form-group">
           <label>Phone *</label>
           <input type="tel" v-model="phoneNumber" required />
         </div>
@@ -156,7 +152,7 @@ textarea {
 .register-button {
   width: 100%;
   padding: 10px;
-  background-color: #4CAF50; /* 기본 색상 */
+  background-color: #6a6a6a; /* 기본 색상 */
   color: white;
   border: none;
   border-radius: 5px;
@@ -168,6 +164,6 @@ textarea {
 }
 
 .register-button:hover {
-  background-color: #45a049;
+  background-color: #6a6a6a;
 }
 </style> 

@@ -111,7 +111,7 @@ export default {
 .body {
   flex: 1 0 auto;
   display: flex;
-  flex-direction: column; /* 네비게이션 바와 컨텐츠 바디가 수직으로 배치되도록 설정 */
+  flex-direction: column;
 }
 
 .navigation-bar {
@@ -140,8 +140,7 @@ export default {
 
 .footer {
   flex: 0 0 auto;
-  position: sticky;
-  bottom: 0;
   width: 100%;
+  margin-top: auto; /* 컨텐츠와 footer 사이의 남은 공간을 자동으로 채움 */
 }
 </style> 

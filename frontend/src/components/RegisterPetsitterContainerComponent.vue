@@ -10,16 +10,38 @@
         </div>
         <div class="form-group">
           <label>Your Location *</label>
-          <select v-model="locationId" required>
-            <option value="" disabled>Select Location</option>
-            <!-- Add location options here -->
-          </select>
+          <div class="location-selects">
+            <div v-if="locationHistory.length > 0" class="previous-selection">
+              {{ locationHistory[locationHistory.length - 1].locationName }}
+            </div>
+            <select 
+              v-model="currentLocation" 
+              @change="loadNextLocations"
+              required
+            >
+              <option value="">선택지 없음</option>
+              <option 
+                v-for="location in availableLocations" 
+                :key="location.locationCode" 
+                :value="location"
+              >
+                {{ location.locationName }}
+              </option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="form-group-inline">
         <div class="form-group">
-          <label>Email *</label>
-          <input type="email" v-model="email" required />
+          <label>Email</label>
+          <input 
+            type="email" 
+            v-model="email" 
+            required 
+            readonly 
+            disabled
+            class="disabled-input"
+          />
         </div>
         <div class="form-group">
           <label>Phone *</label>
@@ -27,18 +49,41 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Pet Type *</label>
+        <label>Service *</label>
         <!-- <button type="button" @click="addPetType" class="add-button">+</button> -->
       </div>
       <div v-for="(petType, index) in petTypes" :key="index" class="form-group">
-        <select v-model="petTypes[index]" required>
-          <option value="" disabled>Select Pet Type</option>
-          <option value="Dog">Dog</option>
-          <option value="Cat">Cat</option>
-          <option value="Bird">Bird</option>
-          <option value="Other">Other</option>
-        </select>
-        <button type="button" @click="removePetType(index)" v-if="index > 0" class="remove-button">-</button>
+        <div class="pet-type-selects">
+          <div v-if="petType.typeHistory.length > 0" class="previous-selection">
+            {{ petType.typeHistory[petType.typeHistory.length - 1].petTypeName }}
+          </div>
+          <select 
+            v-model="petType.currentType" 
+            @change="loadNextTypes(index)"
+            required
+          >
+            <option value="">선택지 없음</option>
+            <option 
+              v-for="type in petType.availableTypes" 
+              :key="type.petTypeCode" 
+              :value="type"
+            >
+              {{ type.petTypeName }}
+            </option>
+          </select>
+          <div class="fee-input-container">
+            <input 
+              type="number" 
+              v-model="petType.fee" 
+              placeholder="요금 입력" 
+              required
+              min="0"
+              class="fee-input"
+            />
+            <span class="currency-symbol">₩</span>
+          </div>
+          <button type="button" @click="removePetType(index)" v-if="index > 0" class="remove-button">-</button>
+        </div>
       </div>
       <button type="button" @click="addPetType" class="add-button">+</button>
       <div class="form-group">
@@ -51,35 +96,182 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   data() {
     return {
       petSitterNickname: '',
       phoneNumber: '',
+      userId: null,
       email: '',
-      locationId: '',
+      currentLocation: '',
+      availableLocations: [],
+      locationHistory: [],
       introduction: '',
-      petTypes: [''] // 기본 pet type 배열
+      petTypes: [{
+        currentType: '',
+        availableTypes: [],
+        typeHistory: [],
+        uniqueId: 0,
+        fee: ''
+      }]
     };
   },
   computed: {
     isValid() {
-      return this.petSitterNickname && this.phoneNumber && this.email && this.locationId && this.introduction;
+      return this.petSitterNickname && this.phoneNumber && this.email && this.currentLocation && this.introduction;
     }
   },
   methods: {
-    addPetType() {
-      this.petTypes.push(''); // 새로운 pet type 추가
-    },
-    removePetType(index) {
-      if (index > 0) {
-        this.petTypes.splice(index, 1); // 선택한 pet type 삭제
+    async loadUserInfo() {
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) {
+          console.error('사용자 ID를 찾을 수 없습니다.');
+          return;
+        }
+        
+        const response = await axios.get(`http://localhost:8080/api/v1/users/${userId}`);
+        if (response.data.status === 200) {
+          const userData = response.data.data;
+          this.petSitterNickname = userData.name;
+          this.phoneNumber = userData.phoneNumber;
+          this.userId = userId;
+        }
+      } catch (error) {
+        console.error('사용자 정보 로딩 실패:', error);
       }
     },
+    async loadRootPetTypes() {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
+        const rootTypes = response.data;
+        this.petTypes.forEach(petType => {
+          petType.availableTypes = [...rootTypes];
+          petType.typeHistory = [];
+        });
+      } catch (error) {
+        console.error('최상위 펫 타입 로딩 실패:', error);
+      }
+    },
+
+    async loadNextTypes(index) {
+      const currentPetType = this.petTypes[index];
+      const selectedType = currentPetType.currentType;
+      
+      if (!selectedType) {
+        if (currentPetType.typeHistory.length > 0) {
+          const previousType = currentPetType.typeHistory.pop();
+          try {
+            const response = await axios.get(`http://localhost:8080/api/v1/pet-types/by-parent/${previousType.parent ? previousType.parent.petTypeCode : 'null'}`);
+            currentPetType.availableTypes = [...response.data];
+          } catch (error) {
+            console.error('이전 펫 타입 로딩 실패:', error);
+          }
+        } else {
+          const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
+          currentPetType.availableTypes = [...response.data];
+        }
+        return;
+      }
+
+      try {
+        const response = await axios.get(`http://localhost:8080/api/v1/pet-types/by-parent/${selectedType.petTypeCode}`);
+        const childTypes = response.data;
+        
+        if (childTypes.length > 0) {
+          currentPetType.typeHistory.push(selectedType);
+          currentPetType.availableTypes = [...childTypes];
+        }
+      } catch (error) {
+        console.error('하위 펫 타입 로딩 실패:', error);
+      }
+    },
+
+    addPetType() {
+      const newUniqueId = Math.max(...this.petTypes.map(pt => pt.uniqueId)) + 1;
+      this.petTypes.push({
+        currentType: '',
+        availableTypes: [],
+        typeHistory: [],
+        uniqueId: newUniqueId,
+        fee: ''
+      });
+      this.loadInitialTypesForIndex(this.petTypes.length - 1);
+    },
+
+    async loadInitialTypesForIndex(index) {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
+        this.petTypes[index].availableTypes = [...response.data];
+      } catch (error) {
+        console.error('펫 타입 로딩 실패:', error);
+      }
+    },
+
+    removePetType(index) {
+      if (index > 0) {
+        this.petTypes.splice(index, 1);
+      }
+    },
+
+    async loadRootLocations() {
+      try {
+        const response = await axios.get('http://localhost:8080/api/v1/locations/by-parent/null');
+        this.availableLocations = response.data;
+        this.locationHistory = [];
+      } catch (error) {
+        console.error('최상위 지역 로딩 실패:', error);
+      }
+    },
+
+    async loadNextLocations() {
+      if (!this.currentLocation) {
+        if (this.locationHistory.length > 0) {
+          const previousLocation = this.locationHistory.pop();
+          try {
+            const response = await axios.get(`http://localhost:8080/api/v1/locations/by-parent/${previousLocation.parent ? previousLocation.parent.locationCode : 'null'}`);
+            this.availableLocations = response.data;
+          } catch (error) {
+            console.error('이전 지역 로딩 실패:', error);
+          }
+        } else {
+          await this.loadRootLocations();
+        }
+        return;
+      }
+
+      try {
+        const response = await axios.get(`http://localhost:8080/api/v1/locations/by-parent/${this.currentLocation.locationCode}`);
+        const childLocations = response.data;
+        
+        if (childLocations.length > 0) {
+          this.locationHistory.push(this.currentLocation);
+          this.availableLocations = childLocations;
+        }
+      } catch (error) {
+        console.error('하위 지역 로딩 실패:', error);
+      }
+    },
+
     registerPetSitter() {
-      // 등록 로직 구현
+      const selectedPetTypes = this.petTypes.map(pt => pt.currentType)
+        .filter(type => type);
+      
+      const finalLocation = this.currentLocation || 
+        (this.locationHistory.length > 0 ? this.locationHistory[this.locationHistory.length - 1] : null);
+      
+      console.log('선택된 펫 타입들:', selectedPetTypes);
+      console.log('선택된 지역:', finalLocation);
       alert('펫시터로 등록되었습니다.');
     }
+  },
+  async created() {
+    await this.loadUserInfo();
+    this.email = localStorage.getItem('userEmail') || '';
+    await this.loadRootPetTypes();
+    await this.loadRootLocations();
   }
 }
 </script>
@@ -164,7 +356,7 @@ textarea {
 .register-button {
   width: 100%;
   padding: 10px;
-  background-color: #4CAF50; /* 기본 색상 */
+  background-color: #6a6a6a; /* 기본 색상 */
   color: white;
   border: none;
   border-radius: 5px;
@@ -176,6 +368,65 @@ textarea {
 }
 
 .register-button:hover {
-  background-color: #45a049;
+  /* background-color: #6a6a6a; */
+}
+
+.pet-type-selects {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+select {
+  flex: 1;
+}
+
+.location-selects {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.previous-selection {
+  color: #6a1b9a;
+  font-weight: bold;
+  min-width: 100px;
+}
+
+.disabled-input {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.fee-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 150px;
+}
+
+.fee-input {
+  width: 100%;
+  padding: 8px;
+  padding-right: 25px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.currency-symbol {
+  position: absolute;
+  right: 8px;
+  color: #666;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
 }
 </style> 

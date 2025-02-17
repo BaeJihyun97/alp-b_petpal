@@ -10,6 +10,7 @@ import RegisterPetSitterPage from '@/pages/RegisterPetSitterPage.vue';
 import PetsitterMyPage from '@/pages/PetsitterMyPage.vue';
 import DeletPetsiiterPage from '@/pages/DeletPetsiiterPage.vue';
 import PetsitterSearchPage from '@/pages/PetsitterSearchPage.vue';
+import AdminPage from '@/pages/AdminPage.vue';
 
 const routes = [
   { path: '/', component: MainPage },
@@ -54,6 +55,11 @@ const routes = [
     path: '/petsitter-search',
     name: 'PetsitterSearch',
     component: PetsitterSearchPage
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminPage
   }
 ]
 
