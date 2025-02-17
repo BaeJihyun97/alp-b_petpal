@@ -32,10 +32,30 @@ public class PetSitterService {
     // @JoinColumn(name = "pet_type_code")
     // private PetTypeCode petTypeCode;    
 
+    @Column(name = "pet_type_code_id", length = 50)
+    private String petTypeCodeId;
+
+    @Column(name = "pet_type_code_group_id", length = 50)
+    private String petTypeCodeGroupId;
+
     @Column(name = "service_fee")
     private String serviceFee;
 
     // @Column(name = "service_location")
     // private String serviceLocation;
+
+    @Column(name = "location_code_id", length = 50)
+    private String locationCodeId;
+
+    @Column(name = "location_code_group_id", length = 50)
+    private String locationCodeGroupId;
+
+
+    @Column(name = "pet_size_code_id", length = 50)
+    private String petSizeCodeId;
+
+    @Column(name = "pet_size_code_group_id", length = 50)
+    private String petSizeCodeGroupId;
+
     
 }

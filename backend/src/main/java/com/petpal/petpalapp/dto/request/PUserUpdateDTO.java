@@ -11,6 +11,6 @@ public class PUserUpdateDTO {
     @Schema(description = "사용자 이름", example = "JohnDoe")
     private String name;
 
-    @Schema(description = "사용자 휴대전화번호호", example = "01012341234")
+    @Schema(description = "사용자 휴대전화번호", example = "01012341234")
     private String phoneNumber;
 }

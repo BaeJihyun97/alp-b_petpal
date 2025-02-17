@@ -14,5 +14,6 @@
         "sourceMaps": true,
         "outFiles": ["${workspaceFolder}/**/*.js"]
       }
-    ]
+    ],
+    "java.configuration.updateBuildConfiguration": "automatic"
   }

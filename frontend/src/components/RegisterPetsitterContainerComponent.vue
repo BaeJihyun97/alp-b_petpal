@@ -12,7 +12,7 @@
           <label>Your Location *</label>
           <div class="location-selects">
             <div v-if="locationHistory.length > 0" class="previous-selection">
-              {{ locationHistory[locationHistory.length - 1].locationName }}
+              {{ locationHistory[locationHistory.length - 1].groupName || locationHistory[locationHistory.length - 1].codeName }}
             </div>
             <select 
               v-model="currentLocation" 
@@ -22,10 +22,10 @@
               <option value="">선택지 없음</option>
               <option 
                 v-for="location in availableLocations" 
-                :key="location.locationCode" 
+                :key="getUniqueKey(location)"
                 :value="location"
               >
-                {{ location.locationName }}
+                {{ location.groupName || location.codeName }}
               </option>
             </select>
           </div>
@@ -55,7 +55,8 @@
       <div v-for="(petType, index) in petTypes" :key="index" class="form-group">
         <div class="pet-type-selects">
           <div v-if="petType.typeHistory.length > 0" class="previous-selection">
-            {{ petType.typeHistory[petType.typeHistory.length - 1].petTypeName }}
+            {{ petType.typeHistory[petType.typeHistory.length - 1].groupName || 
+               petType.typeHistory[petType.typeHistory.length - 1].codeName }}
           </div>
           <select 
             v-model="petType.currentType" 
@@ -65,10 +66,10 @@
             <option value="">선택지 없음</option>
             <option 
               v-for="type in petType.availableTypes" 
-              :key="type.petTypeCode" 
+              :key="getUniqueKey(type)"
               :value="type"
             >
-              {{ type.petTypeName }}
+              {{ type.groupName || type.codeName }}
             </option>
           </select>
           <div class="fee-input-container">
@@ -80,7 +81,7 @@
               min="0"
               class="fee-input"
             />
-            <span class="currency-symbol">₩</span>
+            <span class="currency-symbol">₩/H</span>
           </div>
           <button type="button" @click="removePetType(index)" v-if="index > 0" class="remove-button">-</button>
         </div>
@@ -97,6 +98,12 @@
 
 <script>
 import axios from 'axios';
+
+// 코드 그룹 ID 상수 정의
+const CODE_GROUP = {
+  LOCATION: '200',
+  PET_TYPE: '100'
+};
 
 export default {
   data() {
@@ -143,16 +150,85 @@ export default {
         console.error('사용자 정보 로딩 실패:', error);
       }
     },
+    async loadRootLocations() {
+      try {
+        // 먼저 코드 그룹의 하위 그룹을 확인
+        const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${CODE_GROUP.LOCATION}/sub`);
+        
+        if (groupResponse.data.length > 0) {
+          // 하위 그룹이 있으면 그룹 정보를 사용
+          this.availableLocations = groupResponse.data;
+        } else {
+          // 하위 그룹이 없으면 코드 상세 정보를 가져옴
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.LOCATION}`);
+          this.availableLocations = detailResponse.data.filter(code => code.isActive);
+        }
+        this.locationHistory = [];
+      } catch (error) {
+        console.error('지역 정보 로딩 실패:', error);
+      }
+    },
+
+    async loadNextLocations() {
+      console.log("loadNextLocations");
+      if (!this.currentLocation) {
+        if (this.locationHistory.length > 0) {
+          const previousLocation = this.locationHistory.pop();
+          console.log(previousLocation);
+          await this.loadLocationsByGroup(previousLocation.groupId);
+        } else {
+          await this.loadRootLocations();
+        }
+        return;
+      }
+
+      await this.loadLocationsByGroup(this.currentLocation.groupId);
+    },
+
+    async loadLocationsByGroup(groupId) {
+      try {
+        const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${groupId}/sub`);
+        
+        if (groupResponse.data.length > 0) {
+          this.availableLocations = groupResponse.data;
+          if (this.currentLocation && !this.locationHistory.includes(this.currentLocation)) {
+            this.locationHistory.push(this.currentLocation);
+          }
+        } else {
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${groupId}`);
+          this.availableLocations = detailResponse.data.filter(code => code.isActive);
+          if (this.currentLocation && !this.locationHistory.includes(this.currentLocation)) {
+            this.locationHistory.push(this.currentLocation);
+          }
+        }
+      } catch (error) {
+        console.error('위치 정보 로딩 실패:', error);
+      }
+    },
+
     async loadRootPetTypes() {
       try {
-        const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
-        const rootTypes = response.data;
-        this.petTypes.forEach(petType => {
-          petType.availableTypes = [...rootTypes];
-          petType.typeHistory = [];
-        });
+        // 먼저 코드 그룹의 하위 그룹을 확인
+        const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${CODE_GROUP.PET_TYPE}/sub`);
+        
+        if (groupResponse.data.length > 0) {
+          // 하위 그룹이 있으면 그룹 정보를 사용
+          const rootTypes = groupResponse.data;
+          this.petTypes.forEach(petType => {
+            petType.availableTypes = [...rootTypes];
+            petType.typeHistory = [];
+          });
+        } else {
+          // 하위 그룹이 없으면 코드 상세 정보를 가져옴
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.PET_TYPE}`);
+          const rootTypes = detailResponse.data.filter(code => code.isActive);
+          this.petTypes.forEach(petType => {
+            petType.availableTypes = [...rootTypes];
+            petType.typeHistory = [];
+          });
+        }
       } catch (error) {
-        console.error('최상위 펫 타입 로딩 실패:', error);
+        console.error('펫 타입 로딩 실패:', error);
       }
     },
 
@@ -163,29 +239,34 @@ export default {
       if (!selectedType) {
         if (currentPetType.typeHistory.length > 0) {
           const previousType = currentPetType.typeHistory.pop();
-          try {
-            const response = await axios.get(`http://localhost:8080/api/v1/pet-types/by-parent/${previousType.parent ? previousType.parent.petTypeCode : 'null'}`);
-            currentPetType.availableTypes = [...response.data];
-          } catch (error) {
-            console.error('이전 펫 타입 로딩 실패:', error);
-          }
+          await this.loadTypesByGroup(previousType.groupId, currentPetType);
         } else {
-          const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
-          currentPetType.availableTypes = [...response.data];
+          await this.loadRootPetTypes();
         }
         return;
       }
 
+      await this.loadTypesByGroup(selectedType.groupId, currentPetType);
+    },
+
+    async loadTypesByGroup(groupId, petType) {
       try {
-        const response = await axios.get(`http://localhost:8080/api/v1/pet-types/by-parent/${selectedType.petTypeCode}`);
-        const childTypes = response.data;
+        const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${groupId}/sub`);
         
-        if (childTypes.length > 0) {
-          currentPetType.typeHistory.push(selectedType);
-          currentPetType.availableTypes = [...childTypes];
+        if (groupResponse.data.length > 0) {
+          petType.availableTypes = groupResponse.data;
+          if (petType.currentType && !petType.typeHistory.includes(petType.currentType)) {
+            petType.typeHistory.push(petType.currentType);
+          }
+        } else {
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${groupId}`);
+          petType.availableTypes = detailResponse.data.filter(code => code.isActive);
+          if (petType.currentType && !petType.typeHistory.includes(petType.currentType)) {
+            petType.typeHistory.push(petType.currentType);
+          }
         }
       } catch (error) {
-        console.error('하위 펫 타입 로딩 실패:', error);
+        console.error('펫 타입 정보 로딩 실패:', error);
       }
     },
 
@@ -203,7 +284,7 @@ export default {
 
     async loadInitialTypesForIndex(index) {
       try {
-        const response = await axios.get('http://localhost:8080/api/v1/pet-types/by-parent/null');
+        const response = await axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.PET_TYPE}`);
         this.petTypes[index].availableTypes = [...response.data];
       } catch (error) {
         console.error('펫 타입 로딩 실패:', error);
@@ -213,45 +294,6 @@ export default {
     removePetType(index) {
       if (index > 0) {
         this.petTypes.splice(index, 1);
-      }
-    },
-
-    async loadRootLocations() {
-      try {
-        const response = await axios.get('http://localhost:8080/api/v1/locations/by-parent/null');
-        this.availableLocations = response.data;
-        this.locationHistory = [];
-      } catch (error) {
-        console.error('최상위 지역 로딩 실패:', error);
-      }
-    },
-
-    async loadNextLocations() {
-      if (!this.currentLocation) {
-        if (this.locationHistory.length > 0) {
-          const previousLocation = this.locationHistory.pop();
-          try {
-            const response = await axios.get(`http://localhost:8080/api/v1/locations/by-parent/${previousLocation.parent ? previousLocation.parent.locationCode : 'null'}`);
-            this.availableLocations = response.data;
-          } catch (error) {
-            console.error('이전 지역 로딩 실패:', error);
-          }
-        } else {
-          await this.loadRootLocations();
-        }
-        return;
-      }
-
-      try {
-        const response = await axios.get(`http://localhost:8080/api/v1/locations/by-parent/${this.currentLocation.locationCode}`);
-        const childLocations = response.data;
-        
-        if (childLocations.length > 0) {
-          this.locationHistory.push(this.currentLocation);
-          this.availableLocations = childLocations;
-        }
-      } catch (error) {
-        console.error('하위 지역 로딩 실패:', error);
       }
     },
 
@@ -265,6 +307,13 @@ export default {
       console.log('선택된 펫 타입들:', selectedPetTypes);
       console.log('선택된 지역:', finalLocation);
       alert('펫시터로 등록되었습니다.');
+    },
+
+    getUniqueKey(item) {
+      if (item.groupId && item.groupName) {
+        return `group_${item.groupId}`;
+      }
+      return `detail_${item.codeId}`;
     }
   },
   async created() {

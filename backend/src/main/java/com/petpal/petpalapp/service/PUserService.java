@@ -3,6 +3,7 @@ package com.petpal.petpalapp.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import com.petpal.petpalapp.dto.request.PUserRegistDTO;
 import com.petpal.petpalapp.dto.request.PUserRequestDTO;
 import com.petpal.petpalapp.dto.request.PUserUpdateDTO;
 import com.petpal.petpalapp.dto.response.LoginResponseDTO;
+import com.petpal.petpalapp.dto.response.PUserResponseDTO;
 import com.petpal.petpalapp.mapper.PUserMapper;
 import com.petpal.petpalapp.repository.PUserRepository;
 // import com.petpal.petpalapp.repository.UserGroupCodeRepository;
@@ -64,6 +66,9 @@ public class PUserService {
         // UserGroupCode defaultGroup = userGroupCodeRepository.findById("100")
         //         .orElseThrow(() -> new RuntimeException("Default group not found"));
         // user.setUserGroupCode(defaultGroup);
+
+        user.setUserGroupCodeGroupId("310"); // general user
+        user.setUserGroupCodeId("001"); // general user detail code
 
         user.setUpdatedAt(LocalDateTime.now());
         user.setCreatedAt(LocalDateTime.now());
@@ -164,6 +169,25 @@ public class PUserService {
 
     public PUser checkSession(HttpSession session) {
         return (PUser) session.getAttribute("user");
+    }
+
+    // 그룹 코드로 사용자 조회 메서드 추가
+    public ResponseDTO<List<PUserResponseDTO>> getUsersByGroupCodes(
+            String userGroupCodeGroupId, 
+            String userGroupCodeId) {
+        
+        List<PUser> users = pUserRepository.findByUserGroupCodeIdAndUserGroupCodeGroupId(
+            userGroupCodeId, userGroupCodeGroupId);
+        
+        if (users.isEmpty()) {
+            return new ResponseDTO<>(404, "해당 그룹에 속한 사용자가 없습니다.", null);
+        }
+
+        List<PUserResponseDTO> userDTOs = users.stream()
+            .map(pUserMapper::toResponseDTO)
+            .collect(Collectors.toList());
+
+        return new ResponseDTO<>(200, "그룹별 사용자 조회 성공", userDTOs);
     }
 
 }

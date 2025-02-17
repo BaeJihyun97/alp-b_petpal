@@ -16,6 +16,8 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 // import com.petpal.petpalapp.domain.code.LocationCode;
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -34,14 +36,29 @@ public class PetSitter {
     // @JoinColumn(name = "location_code", nullable = true)
     // private LocationCode locationCode; // location 테이블 PK 참조조
 
+    @Column(name = "location_code_id", length = 50)
+    private String locationCodeId;
+
+    @Column(name = "location_code_group_id", length = 50)
+    private String locationCodeGroupId;
+
+    @Column(name = "nickname", length = 50, nullable = false)
+    private String nickname;
+
+    @Column(name = "phone_number", length = 20, nullable = false)
+    private String phoneNumber;
+
     @Column(name = "introduction", columnDefinition = "TEXT", nullable = false)
     private String introduction; // 소개글 (TEXT 타입)
-
-    @Column(name = "experience", columnDefinition = "TEXT", nullable = false)
-    private String experience; // 경험 정리서 (TEXT 타입)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false)
     private PState state; // Enum 필드 (ENABLED, DISABLED)
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
 }

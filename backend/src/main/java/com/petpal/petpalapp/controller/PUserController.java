@@ -22,10 +22,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
+import com.petpal.petpalapp.dto.response.PUserResponseDTO;
+import org.springframework.web.bind.annotation.RequestParam;
+
+// import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/users")
 @Tag(name = "유저 API", description = "유저 컨트롤러에 대한 설명입니다.")
+// @RequiredArgsConstructor
 public class PUserController {
     private final PUserService pUserService;
 
@@ -75,6 +80,13 @@ public class PUserController {
     public ResponseEntity<ResponseDTO<Void>> deletePUser(@PathVariable("id") Long id) {
         ResponseDTO<Void> response = pUserService.deletePUser(id);
         return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping("/group")
+    public ResponseEntity<ResponseDTO<List<PUserResponseDTO>>> getUsersByGroupCodes(
+            @RequestParam String groupId,  // userGroupCodeGroupId
+            @RequestParam String detailId) { // userGroupCodeId
+        return ResponseEntity.ok(pUserService.getUsersByGroupCodes(groupId, detailId));
     }
 
 }

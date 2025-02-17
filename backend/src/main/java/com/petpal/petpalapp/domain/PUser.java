@@ -17,9 +17,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinColumns;
+// import jakarta.persistence.ManyToOne;
+// import jakarta.persistence.JoinColumn;
+// import jakarta.persistence.JoinColumns;
 // import com.petpal.petpalapp.domain.code.UserGroupCode;
 @Entity
 @Table(name = "puser")
@@ -63,6 +63,12 @@ public class PUser {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private PState state;
+
+    @Column(name = "user_group_code_id", length = 50)
+    private String userGroupCodeId;
+
+    @Column(name = "user_group_code_group_id", length = 50)
+    private String userGroupCodeGroupId;
 
     // @ManyToOne
     // @JoinColumns({

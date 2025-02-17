@@ -37,6 +37,22 @@ public class Pet {
     @Column(nullable = false)
     private int petAge;
 
+    @NotNull
+    @Column(nullable = false)
+    private Long petOwnerId;
+
+    @Column(name = "pet_type_code_id", length = 50)
+    private String petTypeCodeId;
+
+    @Column(name = "pet_type_code_group_id", length = 50)
+    private String petTypeCodeGroupId;
+
+    @Column(name = "pet_size_code_id", length = 50)
+    private String petSizeCodeId;
+
+    @Column(name = "pet_size_code_group_id", length = 50)
+    private String petSizeCodeGroupId;
+
     // @OneToOne
     // @JoinColumn(name = "pet_type_code", nullable = false)
     // private PetTypeCode petTypeCode;
