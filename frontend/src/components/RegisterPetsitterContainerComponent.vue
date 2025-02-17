@@ -54,22 +54,46 @@
       </div>
       <div v-for="(petType, index) in petTypes" :key="index" class="form-group">
         <div class="pet-type-selects">
-          <div v-if="petType.typeHistory.length > 0" class="previous-selection">
-            {{ petType.typeHistory[petType.typeHistory.length - 1].groupName || 
-               petType.typeHistory[petType.typeHistory.length - 1].codeName }}
-          </div>
           <select 
             v-model="petType.currentType" 
             @change="loadNextTypes(index)"
             required
           >
-            <option value="">선택지 없음</option>
+            <option value="">동물 선택</option>
             <option 
               v-for="type in petType.availableTypes" 
               :key="getUniqueKey(type)"
               :value="type"
             >
               {{ type.groupName || type.codeName }}
+            </option>
+          </select>
+          <select 
+            v-model="petType.currentLocation" 
+            @change="loadNextServiceLocations(index)"
+            required
+          >
+            <option value="">위치 선택</option>
+            <option 
+              v-for="location in petType.availableLocations" 
+              :key="getUniqueKey(location)"
+              :value="location"
+            >
+              {{ location.groupName || location.codeName }}
+            </option>
+          </select>
+          <select 
+            v-model="petType.currentPetSize" 
+            @change="loadNextPetSizes(index)"
+            required
+          >
+            <option value="">크기 선택</option>
+            <option 
+              v-for="size in petType.availablePetSizes" 
+              :key="getUniqueKey(size)"
+              :value="size"
+            >
+              {{ size.groupName || size.codeName }}
             </option>
           </select>
           <div class="fee-input-container">
@@ -81,7 +105,7 @@
               min="0"
               class="fee-input"
             />
-            <span class="currency-symbol">₩/H</span>
+            <!-- <span class="currency-symbol">₩/H</span>ㄴ -->
           </div>
           <button type="button" @click="removePetType(index)" v-if="index > 0" class="remove-button">-</button>
         </div>
@@ -101,6 +125,7 @@ import axios from 'axios';
 
 // 코드 그룹 ID 상수 정의
 const CODE_GROUP = {
+  PAT_SIZE: '400',
   LOCATION: '200',
   PET_TYPE: '100'
 };
@@ -121,7 +146,13 @@ export default {
         availableTypes: [],
         typeHistory: [],
         uniqueId: 0,
-        fee: ''
+        fee: '',
+        currentLocation: '',
+        availableLocations: [],
+        locationHistory: [],
+        currentPetSize: '',
+        availablePetSizes: [],
+        petSizeHistory: []
       }]
     };
   },
@@ -232,21 +263,40 @@ export default {
       }
     },
 
+    async loadInitialData(index) {
+      try {
+        // 각각의 데이터를 독립적으로 로드
+        const [petTypeResponse, locationResponse, sizeResponse] = await Promise.all([
+          axios.get(`http://localhost:8080/api/v1/code-groups/${CODE_GROUP.PET_TYPE}/sub`),
+          axios.get(`http://localhost:8080/api/v1/code-groups/${CODE_GROUP.LOCATION}/sub`),
+          axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.PAT_SIZE}`)
+        ]);
+
+        // 펫 타입 설정
+        if (petTypeResponse.data.length > 0) {
+          this.petTypes[index].availableTypes = petTypeResponse.data;
+        } else {
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.PET_TYPE}`);
+          this.petTypes[index].availableTypes = detailResponse.data.filter(code => code.isActive);
+        }
+
+        // 위치 설정
+        this.petTypes[index].availableLocations = locationResponse.data;
+
+        // 크기 설정 (바로 detail 데이터 사용)
+        this.petTypes[index].availablePetSizes = sizeResponse.data.filter(code => code.isActive);
+      } catch (error) {
+        console.error('초기 데이터 로딩 실패:', error);
+      }
+    },
+
     async loadNextTypes(index) {
       const currentPetType = this.petTypes[index];
-      const selectedType = currentPetType.currentType;
-      
-      if (!selectedType) {
-        if (currentPetType.typeHistory.length > 0) {
-          const previousType = currentPetType.typeHistory.pop();
-          await this.loadTypesByGroup(previousType.groupId, currentPetType);
-        } else {
-          await this.loadRootPetTypes();
-        }
+      if (!currentPetType.currentType) {
+        await this.loadInitialData(index);
         return;
       }
-
-      await this.loadTypesByGroup(selectedType.groupId, currentPetType);
+      await this.loadTypesByGroup(currentPetType.currentType.groupId, currentPetType);
     },
 
     async loadTypesByGroup(groupId, petType) {
@@ -270,25 +320,66 @@ export default {
       }
     },
 
+    async loadNextServiceLocations(index) {
+      const currentPetType = this.petTypes[index];
+      if (!currentPetType.currentLocation) {
+        if (currentPetType.locationHistory.length > 0) {
+          const previousLocation = currentPetType.locationHistory.pop();
+          await this.loadServiceLocationsByGroup(previousLocation.groupId, currentPetType);
+        } else {
+          // 초기 위치 데이터 로드
+          const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${CODE_GROUP.LOCATION}/sub`);
+          currentPetType.availableLocations = groupResponse.data;
+        }
+        return;
+      }
+      await this.loadServiceLocationsByGroup(currentPetType.currentLocation.groupId, currentPetType);
+    },
+
+    async loadServiceLocationsByGroup(groupId, petType) {
+      try {
+        const groupResponse = await axios.get(`http://localhost:8080/api/v1/code-groups/${groupId}/sub`);
+        
+        if (groupResponse.data.length > 0) {
+          petType.availableLocations = groupResponse.data;
+          if (petType.currentLocation && !petType.locationHistory.includes(petType.currentLocation)) {
+            petType.locationHistory.push(petType.currentLocation);
+          }
+        } else {
+          const detailResponse = await axios.get(`http://localhost:8080/api/v1/code-details/group/${groupId}`);
+          petType.availableLocations = detailResponse.data.filter(code => code.isActive);
+          if (petType.currentLocation && !petType.locationHistory.includes(petType.currentLocation)) {
+            petType.locationHistory.push(petType.currentLocation);
+          }
+        }
+      } catch (error) {
+        console.error('위치 정보 로딩 실패:', error);
+      }
+    },
+
+    async loadNextPetSizes(index) {
+      // petSize는 detail 데이터이므로 추가 API 호출이 필요하지 않음
+      console.log("loadNextPetSizes : ", index);
+      return;
+    },
+
     addPetType() {
       const newUniqueId = Math.max(...this.petTypes.map(pt => pt.uniqueId)) + 1;
-      this.petTypes.push({
+      const newPetType = {
         currentType: '',
         availableTypes: [],
         typeHistory: [],
         uniqueId: newUniqueId,
-        fee: ''
-      });
-      this.loadInitialTypesForIndex(this.petTypes.length - 1);
-    },
-
-    async loadInitialTypesForIndex(index) {
-      try {
-        const response = await axios.get(`http://localhost:8080/api/v1/code-details/group/${CODE_GROUP.PET_TYPE}`);
-        this.petTypes[index].availableTypes = [...response.data];
-      } catch (error) {
-        console.error('펫 타입 로딩 실패:', error);
-      }
+        fee: '',
+        currentLocation: '',
+        availableLocations: [],
+        locationHistory: [],
+        currentPetSize: '',
+        availablePetSizes: [],
+        petSizeHistory: []
+      };
+      this.petTypes.push(newPetType);
+      this.loadInitialData(this.petTypes.length - 1);
     },
 
     removePetType(index) {
@@ -321,6 +412,7 @@ export default {
     this.email = localStorage.getItem('userEmail') || '';
     await this.loadRootPetTypes();
     await this.loadRootLocations();
+    await this.loadInitialData(0); // 첫 번째 서비스 항목의 데이터 로드
   }
 }
 </script>
@@ -424,10 +516,19 @@ textarea {
   display: flex;
   gap: 10px;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 select {
   flex: 1;
+  min-width: 120px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.fee-input-container {
+  width: 150px;
 }
 
 .location-selects {
@@ -446,13 +547,6 @@ select {
   background-color: #f5f5f5;
   cursor: not-allowed;
   color: #666;
-}
-
-.fee-input-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 150px;
 }
 
 .fee-input {
