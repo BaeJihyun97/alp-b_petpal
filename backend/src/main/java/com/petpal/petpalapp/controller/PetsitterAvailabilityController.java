@@ -5,13 +5,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.petpal.petpalapp.service.PetsitterAvailabilityService;
+import com.petpal.petpalapp.dto.request.AvailabilityRequestDTO;
 
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/petsitters/{petsitterId}/availability")
+@RequestMapping("/api/v1/petsitters/{petsitterId}/availability")
 @RequiredArgsConstructor
 public class PetsitterAvailabilityController {
 
@@ -47,5 +48,13 @@ public class PetsitterAvailabilityController {
             @PathVariable Long petsitterId) {
         Map<DayOfWeek, List<Boolean>> availability = availabilityService.getWeekAvailability(petsitterId);
         return ResponseEntity.ok(availability);
+    }
+
+    @PutMapping
+    public ResponseEntity<Void> updateAvailability(
+            @PathVariable Long petsitterId,
+            @RequestBody List<AvailabilityRequestDTO> availabilityRequests) {
+        availabilityService.updateAvailability(petsitterId, availabilityRequests);
+        return ResponseEntity.ok().build();
     }
 } 

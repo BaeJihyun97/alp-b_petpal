@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import com.petpal.petpalapp.common.enums.PState;
 import com.petpal.petpalapp.repository.PUserRepository;
+import com.petpal.petpalapp.service.PetsitterAvailabilityService;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class PetSitterService {
     private final PetSitterRepository petSitterRepository;
     private final PetSitterMapper petSitterMapper;
     private final PUserRepository pUserRepository;
+    private final PetsitterAvailabilityService petsitterAvailabilityService;
     
     public List<PetSitterResponseDTO> getAllPetSitters() {
         return petSitterRepository.findAll().stream()
@@ -57,7 +59,13 @@ public class PetSitterService {
         petSitter.setCreatedAt(LocalDateTime.now());
         petSitter.setUpdatedAt(LocalDateTime.now());
 
-        return petSitterMapper.toResponseDTO(petSitterRepository.save(petSitter));
+        PetSitter savedPetSitter = petSitterRepository.save(petSitter);
+        
+        // 가능 시간 초기화 추가
+        petsitterAvailabilityService.initializeAvailability(savedPetSitter.getPetSitterId());
+        System.out.println("가능 시간 초기화 완료");
+        
+        return petSitterMapper.toResponseDTO(savedPetSitter);
     }
 
     @Transactional

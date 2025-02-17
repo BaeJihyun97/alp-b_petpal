@@ -20,7 +20,7 @@ import com.petpal.petpalapp.repository.PetSitterRepository;
 public class PetSitterServiceService {
     private final PetSitterServiceRepository petSitterServiceRepository;
     private final PetSitterRepository petSitterRepository;
-
+    private final PetSitterServiceMapper petSitterServiceMapper;
     public PetSitterServiceResponseDTO save(PetSitterServiceRequestDTO requestDTO) {
         PetSitter petSitter = petSitterRepository.findById(requestDTO.getPetSitterId())
             .orElseThrow(() -> new EntityNotFoundException("펫시터를 찾을 수 없습니다."));
@@ -36,18 +36,18 @@ public class PetSitterServiceService {
         petSitterService.setPetSizeCodeGroupId(requestDTO.getPetSizeCodeGroupId());
 
         PetSitterService savedService = petSitterServiceRepository.save(petSitterService);
-        return convertToResponseDTO(savedService);
+        return petSitterServiceMapper.toResponseDTO(savedService);
     }
 
     public PetSitterServiceResponseDTO findById(Long serviceId) {
         PetSitterService service = petSitterServiceRepository.findById(serviceId)
             .orElseThrow(() -> new EntityNotFoundException("서비스를 찾을 수 없습니다."));
-        return convertToResponseDTO(service);
+        return petSitterServiceMapper.toResponseDTO(service);
     }
 
     public List<PetSitterServiceResponseDTO> findByPetSitterId(Long petSitterId) {
         return petSitterServiceRepository.findByPetSitter_PetSitterId(petSitterId).stream()
-            .map(this::convertToResponseDTO)
+            .map(petSitterServiceMapper::toResponseDTO)
             .collect(Collectors.toList());
     }
 
@@ -64,22 +64,22 @@ public class PetSitterServiceService {
         service.setPetSizeCodeGroupId(requestDTO.getPetSizeCodeGroupId());
 
         PetSitterService updatedService = petSitterServiceRepository.save(service);
-        return convertToResponseDTO(updatedService);
+        return petSitterServiceMapper.toResponseDTO(updatedService);
     }
 
-    private PetSitterServiceResponseDTO convertToResponseDTO(PetSitterService service) {
-        PetSitterServiceResponseDTO responseDTO = new PetSitterServiceResponseDTO();
-        responseDTO.setServiceId(service.getServiceId());
-        responseDTO.setPetSitterId(service.getPetSitter().getPetSitterId());
-        responseDTO.setPetTypeCodeId(service.getPetTypeCodeId());
-        responseDTO.setPetTypeCodeGroupId(service.getPetTypeCodeGroupId());
-        responseDTO.setServiceFee(service.getServiceFee());
-        responseDTO.setLocationCodeId(service.getLocationCodeId());
-        responseDTO.setLocationCodeGroupId(service.getLocationCodeGroupId());
-        responseDTO.setPetSizeCodeId(service.getPetSizeCodeId());
-        responseDTO.setPetSizeCodeGroupId(service.getPetSizeCodeGroupId());
-        return responseDTO;
-    }
+    // private PetSitterServiceResponseDTO convertToResponseDTO(PetSitterService service) {
+    //     PetSitterServiceResponseDTO responseDTO = new PetSitterServiceResponseDTO();
+    //     responseDTO.setServiceId(service.getServiceId());
+    //     responseDTO.setPetSitterId(service.getPetSitter().getPetSitterId());
+    //     responseDTO.setPetTypeCodeId(service.getPetTypeCodeId());
+    //     responseDTO.setPetTypeCodeGroupId(service.getPetTypeCodeGroupId());
+    //     responseDTO.setServiceFee(service.getServiceFee());
+    //     responseDTO.setLocationCodeId(service.getLocationCodeId());
+    //     responseDTO.setLocationCodeGroupId(service.getLocationCodeGroupId());
+    //     responseDTO.setPetSizeCodeId(service.getPetSizeCodeId());
+    //     responseDTO.setPetSizeCodeGroupId(service.getPetSizeCodeGroupId());
+    //     return responseDTO;
+    // }
 
     public void delete(Long serviceId) {
         petSitterServiceRepository.deleteById(serviceId);
@@ -87,7 +87,7 @@ public class PetSitterServiceService {
 
     public List<PetSitterServiceResponseDTO> getAllServices() {
         return petSitterServiceRepository.findAll().stream()
-            .map(this::convertToResponseDTO)
+            .map(petSitterServiceMapper::toResponseDTO)
             .collect(Collectors.toList());
     }
 } 

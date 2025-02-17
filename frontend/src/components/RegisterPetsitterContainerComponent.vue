@@ -388,16 +388,80 @@ export default {
       }
     },
 
-    registerPetSitter() {
-      const selectedPetTypes = this.petTypes.map(pt => pt.currentType)
-        .filter(type => type);
-      
-      const finalLocation = this.currentLocation || 
-        (this.locationHistory.length > 0 ? this.locationHistory[this.locationHistory.length - 1] : null);
-      
-      console.log('선택된 펫 타입들:', selectedPetTypes);
-      console.log('선택된 지역:', finalLocation);
-      alert('펫시터로 등록되었습니다.');
+    async registerPetSitter() {
+      try {
+        // 최종 위치 정보 가져오기
+        const finalLocation = this.currentLocation || 
+          (this.locationHistory.length > 0 ? this.locationHistory[this.locationHistory.length - 1] : null);
+
+        // 1. 펫시터 정보 등록
+        const petSitterRequest = {
+          userId: this.userId,
+          nickname: this.petSitterNickname,
+          phoneNumber: this.phoneNumber,
+          introduction: this.introduction,
+          locationCodeId: finalLocation?.codeId || finalLocation?.groupId,
+          locationCodeGroupId: finalLocation?.groupId
+        };
+
+        console.log('Sending pet sitter data:', petSitterRequest);
+        
+        const petSitterResponse = await axios.post('http://localhost:8080/api/v1/pet-sitters', petSitterRequest);
+
+        console.log('Pet sitter response:', petSitterResponse.data);
+        
+        if (!petSitterResponse.data || !petSitterResponse.data.data) {
+          throw new Error('펫시터 등록 응답이 올바르지 않습니다.');
+        }
+
+        const petSitterId = petSitterResponse.data.data.petSitterId; // data.data.petSitterId 형식으로 변경
+        console.log('Pet sitter registered with ID:', petSitterId);
+
+        // 2. 각 서비스 정보 등록
+        const servicePromises = this.petTypes.map(async (pt) => {
+          const serviceRequest = {
+            petSitterId: petSitterId,
+            petTypeCodeId: pt.currentType?.codeId || pt.currentType?.groupId,
+            petTypeCodeGroupId: pt.currentType?.groupId,
+            locationCodeId: pt.currentLocation?.codeId || pt.currentLocation?.groupId,
+            locationCodeGroupId: pt.currentLocation?.groupId,
+            petSizeCodeId: pt.currentPetSize?.codeId,
+            petSizeCodeGroupId: pt.currentPetSize?.groupId,
+            serviceFee: pt.fee
+          };
+
+          console.log('Sending service data:', serviceRequest);
+
+          try {
+            const serviceResponse = await axios.post(
+              'http://localhost:8080/api/v1/pet-sitter-services', 
+              serviceRequest
+            );
+            
+            console.log('Service response:', serviceResponse.data);
+            
+            if (serviceResponse.status !== 201) {
+              console.error('Invalid service response:', serviceResponse);
+              throw new Error('서비스 등록 응답이 올바르지 않습니다.');
+            }
+            
+            return serviceResponse.data;
+          } catch (error) {
+            console.error('Service registration error:', error);
+            throw new Error(`서비스 등록 실패: ${error.response?.data?.message || error.message}`);
+          }
+        });
+
+        // 모든 서비스 등록 완료 대기
+        await Promise.all(servicePromises);
+
+        alert('펫시터로 성공적으로 등록되었습니다.');
+        this.$router.push('/petsitter-my-page');
+
+      } catch (error) {
+        console.error('Registration error:', error);
+        alert(error.message || '등록 중 오류가 발생했습니다.');
+      }
     },
 
     getUniqueKey(item) {

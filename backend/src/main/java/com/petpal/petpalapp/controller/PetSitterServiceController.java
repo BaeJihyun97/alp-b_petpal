@@ -14,7 +14,7 @@ import com.petpal.petpalapp.domain.PetSitter;
 import com.petpal.petpalapp.repository.PetSitterServiceRepository;
 
 @RestController
-@RequestMapping("/api/pet-sitter-services")
+@RequestMapping("/api/v1/pet-sitter-services")
 @RequiredArgsConstructor
 public class PetSitterServiceController {
     private final PetSitterServiceService petSitterServiceService;

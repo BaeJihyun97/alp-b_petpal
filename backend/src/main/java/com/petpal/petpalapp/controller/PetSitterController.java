@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pet-sitters")
+@RequestMapping("/api/v1/pet-sitters")
 @RequiredArgsConstructor
 public class PetSitterController {
     private final PetSitterService petSitterService;

@@ -11,7 +11,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pets")
+@RequestMapping("/api/v1/pets")
 @RequiredArgsConstructor
 public class PetController {
     private final PetService petService;

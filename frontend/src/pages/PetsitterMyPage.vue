@@ -1,21 +1,12 @@
 <template>
   <div class="page-container">
     <Header2Component />
-    <Header3Component />
+    <Header3Component 
+      :title="`Hello ${petSitterNickname} pet sitter`"
+      subtitle="Update Pet Sitter Profile"
+    />
     <div class="petsitter-container">
         <RegisterPetsitterContentsComponent />
-    <div class="service-list">
-      <h2>Services</h2>
-      <div v-for="(service, index) in services" :key="index" class="service-item">
-        <PetsitterServiceRegisterComponent />
-        <button 
-          v-if="index > 0" 
-          type="button" 
-          @click="removeService(index)" 
-          class="remove-button">-</button>
-      </div>
-      <button type="button" @click="addService" class="add-button">+</button>
-    </div>
     </div>
     
     <button type="button" @click="goToDeletePage" class="delete-button">탈퇴하기</button>
@@ -29,7 +20,8 @@ import Header2Component from '@/components/Header2Component.vue';
 import FooterComponent from '@/components/FooterComponent.vue';
 import Header3Component from '@/components/Header3Component.vue';
 import RegisterPetsitterContentsComponent from '@/components/RegisterPetSitterContentsComponent.vue';
-import PetsitterServiceRegisterComponent from '@/components/PetsitterServiceRegisterComponent.vue';
+// import PetsitterServiceRegisterComponent from '@/components/PetsitterServiceRegisterComponent.vue';
+// import axios from 'axios';
 // import { useRouter } from 'vue-router';
 
 export default {
@@ -38,7 +30,7 @@ export default {
     FooterComponent,
     Header3Component,
     RegisterPetsitterContentsComponent,
-    PetsitterServiceRegisterComponent
+    // PetsitterServiceRegisterComponent
   },
   data() {
     return {
@@ -50,7 +42,8 @@ export default {
       bio: '',
       servicePetType: '',
       fee: '',
-      services: [1] // 초기 서비스 항목 1개
+      services: [1], // 초기 서비스 항목 1개
+      petSitterNickname: '',
     };
   },
   methods: {
