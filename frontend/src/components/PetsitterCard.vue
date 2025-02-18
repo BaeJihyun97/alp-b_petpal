@@ -21,14 +21,30 @@
     <div class="card-body">
       <div class="introduction">{{ petsitterInfo.introduction }}</div>
       <div class="fee">시간당 {{ formatFee(fee) }}원</div>
+      <PaymentTest
+        v-if="showPayment"
+        :merchant_uid="generateMerchantUid()"
+        :amount="Number(fee)"
+        :name="`${petsitterInfo.nickname} 펫시터 서비스`"
+        :buyer_name="buyerName"
+        :buyer_tel="buyerTel"
+        :buyer_email="buyerEmail"
+      />
+      <button @click="showPayment = true" class="payment-button">
+        예약하기
+      </button>
     </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
+import PaymentTest from './PaymentTest.vue';
 
 export default {
+  components: {
+    PaymentTest
+  },
   props: {
     petSitterId: {
       type: Number,
@@ -61,7 +77,11 @@ export default {
         nickname: '',
         phoneNumber: '',
         introduction: ''
-      }
+      },
+      showPayment: false,
+      buyerName: '테스트 구매자', // 실제로는 로그인된 사용자 정보를 사용
+      buyerTel: '01012341234',   // 실제로는 로그인된 사용자 정보를 사용
+      buyerEmail: 'test@test.com' // 실제로는 로그인된 사용자 정보를 사용
     }
   },
   methods: {
@@ -77,6 +97,9 @@ export default {
       } catch (error) {
         console.error('펫시터 정보 로딩 실패:', error);
       }
+    },
+    generateMerchantUid() {
+      return `mid_${this.petSitterId}_${new Date().getTime()}`;
     }
   },
   async created() {
@@ -175,5 +198,22 @@ export default {
   font-weight: bold;
   color: #6a1b9a;
   text-align: right;
+}
+
+.payment-button {
+  margin-top: 12px;
+  background-color: #6a1b9a;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.payment-button:hover {
+  background-color: #8e24aa;
 }
 </style> 

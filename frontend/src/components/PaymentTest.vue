@@ -7,41 +7,73 @@
 </template>
 
 <script setup>
-    const onPayment = () => {
-        /* 1. 가맹점 식별하기 */
-        const { IMP } = window;
-        IMP.init('imp60016454'); //고객사 식별코드 입력시 실제 결제가됨
-        /* 2. 결제 데이터 정의하기 */
-        const data = {
-            pg: 'uplus', // 채널로 등록된 PG사만 사용 가능하다. PG사마다 결제 화면이 달라진다
-            pay_method: 'card', // 결제수단
-            merchant_uid: `mid_${new Date().getTime()}`, // 주문번호. db 에서 관리할 주문 번호임.
-            amount: 100, // 결제금액
-            name: '아임포트 결제 데이터 분석', // 주문명(예시 : 주문번호_주문금액_주문일시)
-            buyer_name: '홍길동', // 구매자 이름
-            buyer_tel: '01012341234', // 구매자 전화번호
-            buyer_email: 'baroq8@gmail.com', // 구매자 이메일
-            buyer_addr: '신사동 661-16', // 구매자 주소
-            buyer_postcode: '06018' // 구매자 우편번호
-        };
+import { defineProps } from 'vue';
 
-        /* 4. 결제 창 호출하기 */
-        IMP.request_pay(data, callback);
+// props 정의
+const props = defineProps({
+    merchant_uid: {
+        type: String,
+        required: true
+    },
+    amount: {
+        type: Number,
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    buyer_name: {
+        type: String,
+        required: true
+    },
+    buyer_tel: {
+        type: String,
+        required: true
+    },
+    buyer_email: {
+        type: String,
+        required: true
+    }
+});
+
+const onPayment = () => {
+    /* 1. 가맹점 식별하기 */
+    const { IMP } = window;
+    IMP.init('imp60016454'); //고객사 식별코드 입력시 실제 결제가됨
+    
+    /* 2. 결제 데이터 정의하기 */
+    const data = {
+        pg: 'uplus', // 채널로 등록된 PG사만 사용 가능하다. PG사마다 결제 화면이 달라진다
+        pay_method: 'card', // 결제수단
+        merchant_uid: props.merchant_uid,
+        amount: props.amount,
+        name: props.name,
+        buyer_name: props.buyer_name,
+        buyer_tel: props.buyer_tel,
+        buyer_email: props.buyer_email,
+        buyer_addr: '신사동 661-16', // 기본값으로 유지
+        buyer_postcode: '06018' // 기본값으로 유지
     };
-    const callback = (response) => {
+
+    /* 4. 결제 창 호출하기 */
+    IMP.request_pay(data, callback);
+};
+
+const callback = (response) => {
     /* 3. 콜백 함수 정의하기 */
-        const {
-            success,
-            merchant_uid,
-            error_msg
-        } = response;
+    const {
+        success,
+        merchant_uid,
+        error_msg
+    } = response;
 
-        console.log(merchant_uid, response);
+    console.log(merchant_uid, response);
 
-        if (success) {
-            alert('결제 성공');
-        } else {
-            alert(`결제 실패: ${error_msg}`);
-        }
-    };
+    if (success) {
+        alert('결제 성공');
+    } else {
+        alert(`결제 실패: ${error_msg}`);
+    }
+};
 </script>

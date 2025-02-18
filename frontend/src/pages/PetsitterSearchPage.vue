@@ -8,7 +8,8 @@
       <div class="search-container">
         <input type="text" placeholder="Search for pet sitters..." class="search-input" />
       </div>
-      <PetsitterCardList />
+      <!-- <PetsitterCardList /> -->
+      <PetsitterSearchPageComponent />
       <FooterComponent />
     </div>
   </template>
@@ -17,15 +18,16 @@
   import Header2Component from '@/components/Header2Component.vue';
   import FooterComponent from '@/components/FooterComponent.vue';
   import Header3Component from '@/components/Header3Component.vue';
-  import PetsitterCardList from '@/components/PetsitterCardList.vue';
-  
+  // import PetsitterCardList from '@/components/PetsitterCardList.vue';
+  import PetsitterSearchPageComponent from '@/components/PetsitterSearchPageComponent.vue';
 
   export default {
     components: {
       Header2Component,
       FooterComponent,
       Header3Component,
-      PetsitterCardList
+      // PetsitterCardList,
+      PetsitterSearchPageComponent
     }
   }
   </script>
