@@ -17,37 +17,41 @@
 
 // @Entity
 // @Getter
-// @Setter
-// @Table(name = "reservations")
 // public class Reservation {
-    
+
 //     @Id
 //     @GeneratedValue(strategy = GenerationType.IDENTITY)
-//     private Long id;
+//     private Long reservationId;
 
-//     @Column(nullable = false)
-//     private Long userId;
-
-//     @Column(nullable = false)
+//     @Column(name = "pet_sitter_id")
 //     private Long petSitterId;
 
-//     @Column(nullable = false)
+//     @Column(name = "buyer_id")
+//     private Long buyerId;
+
+//     @Column(name = "service_id")
 //     private Long serviceId;
 
-//     @Column(nullable = false)
-//     private LocalDateTime startDateTime;
-
-//     @Column(nullable = false)
-//     private LocalDateTime endDateTime;
-
-//     @Column(nullable = false)
-//     private Integer totalPrice;
+//     @Column(name = "payment_id")
+//     private String paymentId;
 
 //     @Enumerated(EnumType.STRING)
 //     private ReservationStatus status;
 
-//     // 예약 상태 enum 결제전, 확인, 취소, 완료
+//     @Builder
+//     public Reservation(Long petSitterId, Long buyerId, Long serviceId, String paymentId) {
+//         this.petSitterId = petSitterId;
+//         this.buyerId = buyerId;
+//         this.serviceId = serviceId;
+//         this.paymentId = paymentId;
+//         this.status = ReservationStatus.PENDING;
+//     }
+
 //     public enum ReservationStatus {
-//         PENDING, CONFIRMED, CANCELLED, COMPLETED
+//         PENDING,    // 대기중
+//         CONFIRMED,  // 확정됨a
+//         COMPLETED,  // 완료됨
+//         CANCELLED   // 취소됨
 //     }
 // }
+

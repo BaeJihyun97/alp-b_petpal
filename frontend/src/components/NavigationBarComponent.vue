@@ -1,7 +1,7 @@
 <template>
   <nav class="navigation-bar">
     <div class="links">
-      <a href="#">펫시터</a>
+      <router-link to="/petsitter-search">펫시터</router-link>
       <a href="#">제품</a>
       <a href="#">반려동물</a>
     </div>

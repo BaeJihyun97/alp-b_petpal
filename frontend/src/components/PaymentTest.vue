@@ -60,18 +60,50 @@ const onPayment = () => {
     IMP.request_pay(data, callback);
 };
 
-const callback = (response) => {
-    /* 3. 콜백 함수 정의하기 */
+const callback = async (response) => {
     const {
         success,
         merchant_uid,
-        error_msg
+        error_msg,
+        imp_uid,
+        paid_amount,
+        pay_method,
+        paid_at,
+        status
     } = response;
 
     console.log(merchant_uid, response);
 
     if (success) {
-        alert('결제 성공');
+        try {
+            // 백엔드 API 호출하여 결제 정보 저장
+            const result = await fetch('http://localhost:8080/api/payments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    impUid: imp_uid,
+                    merchantUid: merchant_uid,
+                    paidAmount: paid_amount,
+                    payMethod: pay_method,
+                    paidAt: paid_at,           // Unix timestamp 그대로 전송
+                    status: status,
+                    buyerName: props.buyer_name,
+                    buyerEmail: props.buyer_email,
+                    buyerTel: props.buyer_tel
+                })
+            });
+
+            if (!result.ok) {
+                throw new Error('결제 정보 저장 실패');
+            }
+
+            alert('결제가 성공적으로 완료되었습니다.');
+        } catch (error) {
+            console.error('결제 정보 저장 중 오류 발생:', error);
+            alert('결제는 성공했으나 정보 저장에 실패했습니다.');
+        }
     } else {
         alert(`결제 실패: ${error_msg}`);
     }
